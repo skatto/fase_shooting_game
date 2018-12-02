@@ -1,8 +1,6 @@
 
 #include "game.h"
 
-#include "gl_util.h"
-
 namespace {
 
 // clang-format off
@@ -38,33 +36,40 @@ void ShootingGame::init(const std::vector<fase::Callable*>& pipes) {
   pipes[0]->fixOutput<float>({"damage"});
 
   // OpenGL Setups
-  GLfloat g_vertex_buffer_data[] = {
+  std::vector<GLfloat> g_vertex_buffer_data = {
       -1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
   };
 
   program_id = LoadShaders(vertex_shader_code, fragment_shader_code);
 
-  GLuint VertexArrayID;
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
-
-  glGenBuffers(1, &vertexbuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
-               g_vertex_buffer_data, GL_STATIC_DRAW);
+  polygons.emplace_back();
+  polygons.back().init(GL_TRIANGLES, GL_STATIC_DRAW, g_vertex_buffer_data);
+  //
+  // GLuint VertexArrayID;
+  // glGenVertexArrays(1, &VertexArrayID);
+  // glBindVertexArray(VertexArrayID);
+  //
+  // glGenBuffers(1, &vertexbuffer);
+  // glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+  // glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
+  //              g_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
 bool ShootingGame::mainLoop() {
   // Drawing window
   glUseProgram(program_id);
 
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
-  glDisableVertexAttribArray(0);
+  for (auto& pol : polygons) {
+    pol.draw();
+  }
+  //
+  // glEnableVertexAttribArray(0);
+  // glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+  // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  //
+  // glDrawArrays(GL_TRIANGLES, 0, 3);
+  //
+  // glDisableVertexAttribArray(0);
 
   return true;
 }

@@ -68,6 +68,41 @@ static GLuint LoadShaders(const std::string& vertex_shader_code,
   return program_id;
 }
 
-class VBO {};
+class VBO {
+public:
+  void init(const GLenum& primitive_type_, const GLenum& buffer_data_usage,
+            const std::vector<GLfloat>& data) {
+    primitive_type = primitive_type_;
+    size = int(data.size());
+    glGenVertexArrays(1, &vertex_array_id);
+    glBindVertexArray(vertex_array_id);
+
+    glGenBuffers(1, &vertex_buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+    glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
+                 buffer_data_usage);
+  }
+
+  void draw() {
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glDrawArrays(primitive_type, 0, size);
+
+    glDisableVertexAttribArray(0);
+  }
+
+  ~VBO() {
+    // TODO
+  }
+
+private:
+  GLuint vertex_array_id = GLuint(-1);
+  GLuint vertex_buffer_id = GLuint(-1);
+
+  GLenum primitive_type;
+  int size;
+};
 
 #endif  // GL_UTIL_H_20181202

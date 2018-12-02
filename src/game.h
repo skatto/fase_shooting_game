@@ -4,6 +4,7 @@
 
 #include <fase/callable.h>
 
+#include "gl_util.h"
 #include "window.h"
 
 class ShootingGame {
@@ -12,7 +13,7 @@ public:
   bool mainLoop();
 
 private:
-  GLuint vertexbuffer;
+  std::vector<VBO> polygons;
   GLuint program_id;
 };
 

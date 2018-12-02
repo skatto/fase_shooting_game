@@ -5,6 +5,7 @@
 #include <fase/editor.h>
 #include <fase/fase.h>
 
+#include "game.h"
 #include "window.h"
 
 int main() {
@@ -13,7 +14,11 @@ int main() {
   auto window = InitOpenGL("editor");
   InitImGui(window, "##editor1");
 
-  RunRenderingLoop(window, app, []() -> bool {return true;});
+  ShootingGame game;
+
+  game.init({&app});
+
+  RunRenderingLoop(window, app, [&]() { return game.mainLoop(); });
 
   return EXIT_SUCCESS;
 }

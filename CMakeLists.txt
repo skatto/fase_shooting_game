@@ -12,6 +12,7 @@ add_subdirectory(fase)
 add_executable(shooting_game
 	src/functions.cpp
 	src/main.cpp
+	src/game.cpp
 )
 
 target_include_directories(shooting_game PUBLIC fase/src)

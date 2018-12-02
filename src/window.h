@@ -104,10 +104,6 @@ static bool RunRenderingLoop(GLFWwindow* window, fase::GUIEditor& editor,
       break;
     }
 
-    if (!drawer()) {
-        return false;
-    }
-
     // Rendering
     ImGui::Render();
     int display_w, display_h;
@@ -116,10 +112,14 @@ static bool RunRenderingLoop(GLFWwindow* window, fase::GUIEditor& editor,
     glViewport(0, 0, display_w, display_h);
 
     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    if (!drawer()) {
+      return false;
+    }
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwMakeContextCurrent(window);
+
     glfwSwapBuffers(window);
   }
   return true;

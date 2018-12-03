@@ -70,14 +70,43 @@ static GLuint LoadShaders(const std::string& vertex_shader_code,
 
 class VBO {
 public:
-  void init(const GLenum& primitive_type_, const GLenum& buffer_data_usage,
+  VBO() = default;
+  VBO(VBO&) = delete;
+  VBO(const VBO&) = delete;
+  VBO(VBO&& another)
+      : vertex_array_id(another.vertex_array_id),
+        vertex_buffer_id(another.vertex_buffer_id) {
+    another.vertex_array_id = GLuint(-1);
+    another.vertex_buffer_id = GLuint(-1);
+  }
+  VBO& operator=(VBO&) = delete;
+  VBO& operator=(const VBO&) = delete;
+  VBO& operator=(VBO&& another) {
+    reset();
+
+    std::swap(vertex_array_id, another.vertex_array_id);
+    std::swap(vertex_buffer_id, another.vertex_buffer_id);
+    return *this;
+  }
+
+  void init(const GLenum& primitive_type_, const GLenum& buffer_data_usage_,
             const std::vector<GLfloat>& data) {
     primitive_type = primitive_type_;
+    buffer_data_usage = buffer_data_usage_;
     size = int(data.size());
+
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
 
     glGenBuffers(1, &vertex_buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+    glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
+                 buffer_data_usage);
+  }
+
+  void setData(const std::vector<GLfloat>& data) {
+    size = int(data.size());
+
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
     glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
                  buffer_data_usage);
@@ -93,15 +122,25 @@ public:
     glDisableVertexAttribArray(0);
   }
 
-  ~VBO() {
-    // TODO
+  void reset() {
+    if (vertex_array_id != GLuint(-1)) {
+      glDeleteVertexArrays(1, &vertex_array_id);
+      vertex_array_id = GLuint(-1);
+    }
+    if (vertex_buffer_id != GLuint(-1)) {
+      glDeleteBuffers(1, &vertex_buffer_id);
+      vertex_buffer_id = GLuint(-1);
+    }
   }
+
+  ~VBO() { reset(); }
 
 private:
   GLuint vertex_array_id = GLuint(-1);
   GLuint vertex_buffer_id = GLuint(-1);
 
   GLenum primitive_type;
+  GLenum buffer_data_usage;
   int size;
 };
 

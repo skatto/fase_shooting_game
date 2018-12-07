@@ -1,0 +1,11 @@
+INOUT
+ x y z
+ dst_x dst_y dst_z
+NODE
+FASE:__sub_pipe_PosUpdater PosUpdater int 68 int 65 float 0.03 float 0.03 float 0 float 0.16491 
+FASE:__sub_pipe_PosUpdater pos_updater int 87 int 83 float 0.03 float 0.03 float 0 float 0.22446 
+LINK
+FASE:__output 0 PosUpdater 5
+FASE:__output 1 pos_updater 5
+PosUpdater 4 FASE:__input 0
+pos_updater 4 FASE:__input 1

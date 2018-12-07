@@ -1,0 +1,14 @@
+INOUT
+ key power max_speed
+ speed
+NODE
+Cross cross float 0 float 0 float 0 
+KeyTime key_time int 0 float 0 
+Min min float 0 float 0 float 0 
+LINK
+FASE:__output 0 min 2
+cross 0 key_time 1
+cross 1 FASE:__input 1
+key_time 0 FASE:__input 0
+min 0 cross 2
+min 1 FASE:__input 2

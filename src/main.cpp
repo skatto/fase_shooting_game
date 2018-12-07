@@ -61,6 +61,7 @@ float KeyPressStorer::getPressTime(int key) {
                .count() /
            1000.f;
   }
+  return 0.f;
 }
 
 int main() {

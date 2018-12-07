@@ -14,7 +14,7 @@ constexpr static char vertex_shader_code[] = R"(
 
 layout(location = 0) in vec3 vertexPosition_modelspace;
 
-void main(){
+void main() {
     gl_Position.xyz = vertexPosition_modelspace;
     gl_Position.w = 1.0;
 }
@@ -45,17 +45,19 @@ private:
 
   std::vector<VBO> polygons;
   GLuint program_id;
-  std::vector<fase::Callable *> pipes;
+
+  fase::Callable *p1_mover;
 
   float p1_pos[3] = {};
   float p2_pos[3] = {};
 };
 
 void ShootingGame::Impl::init(const std::vector<fase::Callable *> &pipes_) {
-  pipes = pipes_;
+  p1_mover = pipes_[0];
+
   // Fase Setups
-  pipes[0]->fixInput<float, float, float>({"x", "y", "z"});
-  pipes[0]->fixOutput<float, float, float>({"dst_x", "dst_y", "dst_z"});
+  p1_mover->fixInput<float, float, float>({"x", "y", "z"});
+  p1_mover->fixOutput<float, float, float>({"dst_x", "dst_y", "dst_z"});
 
   // OpenGL Setups
   program_id = LoadShaders(vertex_shader_code, fragment_shader_code);
@@ -70,7 +72,7 @@ bool ShootingGame::Impl::mainLoop() {
 
   try {
     try {
-      (*pipes[0])(p1_pos[0], p1_pos[1], p1_pos[2])
+      (*p1_mover)(p1_pos[0], p1_pos[1], p1_pos[2])
           .get(p1_pos, p1_pos + 1, p1_pos + 2);
     } catch (fase::ErrorThrownByNode &e) {
       std::cerr << e.what() << std::endl;

@@ -73,11 +73,11 @@ int main() {
   KeyPressStorer key_controller;
   key_controller.start(window);
 
-  app.addFunctionBuilder<void, int, float &>(
-      "KeyTime", std::function<void(int, float &)>([&](int key, float &time) {
-        time = key_controller.getPressTime(key);
-      }),
-      {"", ""}, {"key", "dst_time"});
+  std::function<void(int, float &)> key_time = [&](int key, float &time) {
+    time = key_controller.getPressTime(key);
+  };
+
+  app.addFunctionBuilder("KeyTime", key_time, {"", ""}, {"key", "dst_time"});
 
   ShootingGame game(window);
 

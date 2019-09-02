@@ -1,59 +1,60 @@
-
 SUB_PIPELINE
 KeyToSpeed
-
 INOUT
- key power max_speed
+ key power max_speed key_data
  speed
 NODE
 Cross cross float 0 float 0 float 0 
-KeyTime key_time int 0 float 0 
+KeyPressTime key_time int 0 float 0 KeyPressStorer  
 Min min float 0 float 0 float 0 
 LINK
 FASE:__output 0 min 2
 cross 0 key_time 1
 cross 1 FASE:__input 1
 key_time 0 FASE:__input 0
+key_time 2 FASE:__input 3
 min 0 cross 2
 min 1 FASE:__input 2
 END_LINK
 
 SUB_PIPELINE
 PosUpdater
-
 INOUT
- plus_key minus_key power max_speed now_pos
+ plus_key minus_key power max_speed now_pos key_data
  dst_pos
 NODE
-Add add float 0 float 0 float 0.22446 
-Diff diff float 0 float 0 float 0.22446 
-FASE:__sub_pipe_KeyToSpeed minus_input int 0 float 0 float 0 float 0 
-FASE:__sub_pipe_KeyToSpeed plus_input int 0 float 0 float 0 float 0 
+Add add float 0 float 0 float 0.21321 
+Diff diff float 0 float 0 float 0.21321 
+FASE:__sub_pipe_KeyToSpeed minus_input int 0 float 0 float 0 KeyPressStorer  float 0 
+FASE:__sub_pipe_KeyToSpeed plus_input int 0 float 0 float 0 KeyPressStorer  float 0 
 LINK
 FASE:__output 0 diff 2
-add 0 plus_input 3
+add 0 plus_input 4
 add 1 FASE:__input 4
 diff 0 add 2
-diff 1 minus_input 3
+diff 1 minus_input 4
 minus_input 0 FASE:__input 1
 minus_input 1 FASE:__input 2
 minus_input 2 FASE:__input 3
+minus_input 3 FASE:__input 5
 plus_input 0 FASE:__input 0
 plus_input 1 FASE:__input 2
 plus_input 2 FASE:__input 3
+plus_input 3 FASE:__input 5
 END_LINK
 
 MAIN_PIPELINE
-
 INOUT
- x y z
- dst_x dst_y dst_z
+ x y key_data
+ dst_x dst_y
 NODE
-FASE:__sub_pipe_PosUpdater PosUpdater int 68 int 65 float 0.03 float 0.03 float 0 float 0.16491 
-FASE:__sub_pipe_PosUpdater pos_updater int 87 int 83 float 0.03 float 0.03 float 0 float 0.22446 
+FASE:__sub_pipe_PosUpdater h_pos_updater int 68 int 65 float 0.03 float 0.03 float 0 KeyPressStorer  float 0.0285302 
+FASE:__sub_pipe_PosUpdater v_pos_updater int 87 int 83 float 0.03 float 0.03 float 0 KeyPressStorer  float 0.21321 
 LINK
-FASE:__output 0 PosUpdater 5
-FASE:__output 1 pos_updater 5
-PosUpdater 4 FASE:__input 0
-pos_updater 4 FASE:__input 1
+FASE:__output 0 h_pos_updater 6
+FASE:__output 1 v_pos_updater 6
+h_pos_updater 4 FASE:__input 0
+h_pos_updater 5 FASE:__input 2
+v_pos_updater 4 FASE:__input 1
+v_pos_updater 5 FASE:__input 2
 END_LINK

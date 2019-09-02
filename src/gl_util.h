@@ -7,6 +7,34 @@
 #include <iostream>
 #include <vector>
 
+#define CHECK_GL_ERROR() checkGlError(__LINE__);
+// #define CHECK_GL_ERROR()
+
+static void checkGlError(int line) {
+  GLenum err_id = glGetError();
+
+  if (err_id == GL_NO_ERROR) {
+    return;
+  }
+
+  std::cerr << "OpenGL Error : line = " << line << " . ";
+
+#define temp(err_name)                   \
+  if (err_id == err_name) {              \
+    std::cerr << #err_name << std::endl; \
+  }
+
+  temp(GL_INVALID_ENUM);
+  temp(GL_INVALID_VALUE);
+  temp(GL_INVALID_OPERATION);
+  temp(GL_INVALID_FRAMEBUFFER_OPERATION);
+  temp(GL_OUT_OF_MEMORY);
+
+#undef temp
+
+  std::terminate();
+}
+
 static GLuint LoadShaders(const std::string& vertex_shader_code,
                           const std::string& fragment_shader_code) {
   GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
@@ -74,9 +102,9 @@ public:
   VBO(VBO&) = delete;
   VBO(const VBO&) = delete;
   VBO(VBO&& another)
-      : vertex_array_id(another.vertex_array_id),
+      :  // vertex_array_id(another.vertex_array_id),
         vertex_buffer_id(another.vertex_buffer_id) {
-    another.vertex_array_id = GLuint(-1);
+    // another.vertex_array_id = GLuint(-1);
     another.vertex_buffer_id = GLuint(-1);
   }
   VBO& operator=(VBO&) = delete;
@@ -84,7 +112,7 @@ public:
   VBO& operator=(VBO&& another) {
     reset();
 
-    std::swap(vertex_array_id, another.vertex_array_id);
+    // std::swap(vertex_array_id, another.vertex_array_id);
     std::swap(vertex_buffer_id, another.vertex_buffer_id);
     return *this;
   }
@@ -95,38 +123,71 @@ public:
     buffer_data_usage = buffer_data_usage_;
     size = int(data.size());
 
-    glGenVertexArrays(1, &vertex_array_id);
-    glBindVertexArray(vertex_array_id);
+    // if (vertex_buffer_id == -1) {
+    //   glGenVertexArrays(1, &vertex_array_id);
+    //   CHECK_GL_ERROR();
+    // }
+    // glBindVertexArray(vertex_array_id);
+    CHECK_GL_ERROR();
 
     glGenBuffers(1, &vertex_buffer_id);
+    CHECK_GL_ERROR();
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
-                 buffer_data_usage);
+    CHECK_GL_ERROR();
+    // glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
+    //              buffer_data_usage);
+    // CHECK_GL_ERROR();
+
+    std::clog << "vbo id : " << vertex_buffer_id << std::endl;
+    // std::clog << "vao id : " << vertex_array_id << std::endl;
   }
 
   void setData(const std::vector<GLfloat>& data) {
+    // std::clog << "vbo id : " << vertex_buffer_id << std::endl;
+    // std::clog << "vao id : " << vertex_array_id << std::endl;
+    // std::clog << "{";
+    // for (auto& datum : data) {
+    // std::clog << datum << ", ";
+    // }
+    // std::clog << "}" << std::endl;
+
     size = int(data.size());
 
+    CHECK_GL_ERROR();
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+    CHECK_GL_ERROR();
+    // glBindVertexArray(vertex_array_id);
+    CHECK_GL_ERROR();
+    assert(buffer_data_usage == GL_DYNAMIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, (data.size() * sizeof(GLfloat)), &data[0],
                  buffer_data_usage);
+    CHECK_GL_ERROR();
   }
 
   void draw() {
+    if (vertex_buffer_id == GLuint(-1)) {
+      return;
+    }
+    CHECK_GL_ERROR();
     glEnableVertexAttribArray(0);
+    CHECK_GL_ERROR();
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+    CHECK_GL_ERROR();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    CHECK_GL_ERROR();
 
     glDrawArrays(primitive_type, 0, size);
+    CHECK_GL_ERROR();
 
     glDisableVertexAttribArray(0);
+    CHECK_GL_ERROR();
   }
 
   void reset() {
-    if (vertex_array_id != GLuint(-1)) {
-      glDeleteVertexArrays(1, &vertex_array_id);
-      vertex_array_id = GLuint(-1);
-    }
+    // if (vertex_array_id != GLuint(-1)) {
+    //   glDeleteVertexArrays(1, &vertex_array_id);
+    //   vertex_array_id = GLuint(-1);
+    // }
     if (vertex_buffer_id != GLuint(-1)) {
       glDeleteBuffers(1, &vertex_buffer_id);
       vertex_buffer_id = GLuint(-1);
@@ -136,7 +197,7 @@ public:
   ~VBO() { reset(); }
 
 private:
-  GLuint vertex_array_id = GLuint(-1);
+  // static inline GLuint vertex_array_id = GLuint(-1);
   GLuint vertex_buffer_id = GLuint(-1);
 
   GLenum primitive_type;

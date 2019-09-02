@@ -52,6 +52,10 @@ static GLFWwindow* InitOpenGL(const std::string& window_title) {
     return nullptr;
   }
 
+  GLuint vertex_array_id;
+  glGenVertexArrays(1, &vertex_array_id);
+  glBindVertexArray(vertex_array_id);
+
   return window;
 }
 
@@ -83,8 +87,10 @@ static void InitImGui(GLFWwindow* window, const std::string& font_path) {
   });
 }
 
-static bool RunRenderingLoop(GLFWwindow* window, fase::GUIEditor& editor,
-                             std::function<bool()> drawer) {
+static bool RunRenderingLoop(
+    GLFWwindow* window,
+    std::map<std::string, std::shared_ptr<fase::GUIEditor>>& editors,
+    std::function<bool()> drawer) {
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
 
@@ -100,8 +106,12 @@ static bool RunRenderingLoop(GLFWwindow* window, fase::GUIEditor& editor,
     ImGui::NewFrame();
 
     // Call inserted process
-    if (!editor.runEditing("Fase Editor", "##fase")) {
-      break;
+    int i = 0;
+    for (auto& [key, editor] : editors) {
+      i++;
+      if (!editor->runEditing("Fase Editor " + key, "##fase_" + key)) {
+        return false;
+      }
     }
 
     // Rendering

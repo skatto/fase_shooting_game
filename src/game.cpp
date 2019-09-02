@@ -32,48 +32,97 @@ void main(){
 
 // clang-format on
 
+void drawPlayer(const float &x, const float &y, VBO &vbo) {
+  std::vector<GLfloat> g_vertex_buffer_data = {
+      -.1f, -.1f, .0f, .1f, -.1f, .0f, .0f, .1f, .0f,
+  };
+
+  for (size_t i = 0; i < 3; i++) {
+    g_vertex_buffer_data[i * 3 + 0] += x;
+    g_vertex_buffer_data[i * 3 + 1] += y;
+  }
+
+  vbo.setData(g_vertex_buffer_data);
+}
+
+void updateKeyInputData(GLFWwindow *window, KeyPressStorer *data) {
+  for (int key = 32; key < 348; key++) {
+    int action = glfwGetKey(window, key);
+    if (action == GLFW_PRESS) {
+      if (!data->pressed_map.count(key)) {
+        data->pressed_map[key] = std::chrono::system_clock::now();
+      }
+    } else {
+      if (data->pressed_map.count(key)) {
+        data->pressed_map.erase(key);
+      }
+    }
+  }
+}
+
 }  // namespace
 
-class ShootingGame::Impl {
-public:
-  Impl(GLFWwindow *window_) : window(window_) {}
-  void init(const std::vector<fase::Callable *> &pipes);
-  bool mainLoop();
+//============================ ShootingGame ====================================
 
-private:
-  GLFWwindow *window;
+ShootingGame::ShootingGame(GLFWwindow *game_window) : window(game_window) {}
 
-  std::vector<VBO> polygons;
-  GLuint program_id;
-
-  fase::Callable *p1_mover;
-
-  float p1_pos[3] = {};
-  float p2_pos[3] = {};
-};
-
-void ShootingGame::Impl::init(const std::vector<fase::Callable *> &pipes_) {
-  p1_mover = pipes_[0];
-
+void ShootingGame::init() {
   // Fase Setups
-  p1_mover->fixInput<float, float, float>({"x", "y", "z"});
-  p1_mover->fixOutput<float, float, float>({"dst_x", "dst_y", "dst_z"});
+  p1_mover->fixInput<float, float, KeyPressStorer>({"x", "y", "key_data"});
+  p1_mover->fixOutput<float, float>({"dst_x", "dst_y"});
+
+  p2_mover->fixInput<float, float, KeyPressStorer>({"x", "y", "key_data"});
+  p2_mover->fixOutput<float, float>({"dst_x", "dst_y"});
 
   // OpenGL Setups
   program_id = LoadShaders(vertex_shader_code, fragment_shader_code);
 
+  // std::clog << "p1" << std::endl;
   polygons.emplace_back();
   polygons.back().init(GL_TRIANGLES, GL_DYNAMIC_DRAW, {});
+  // std::clog << "p2" << std::endl;
+  // polygons.emplace_back();
+  // polygons.back().init(GL_TRIANGLES, GL_DYNAMIC_DRAW, {});
+
+  updatePipelines();
 }
 
-bool ShootingGame::Impl::mainLoop() {
+void ShootingGame::updatePipelines() {
+  p1_update_func = p1_mover->exportPipeline<float, float, KeyPressStorer>(false)
+                       .getp<float, float>();
+  p2_update_func = p2_mover->exportPipeline<float, float, KeyPressStorer>(false)
+                       .getp<float, float>();
+}
+
+bool ShootingGame::mainLoop() {
+  updateKeyInputData(window, &key_press_storer);
+
   // Drawing window
   glUseProgram(program_id);
 
+#if 0
+    p1_update_func =
+        p1_mover->exportPipeline<float, float, KeyPressStorer>(false)
+            .getp<float, float>();
+    p2_update_func =
+        p2_mover->exportPipeline<float, float, KeyPressStorer>(false)
+            .getp<float, float>()();
+    {
+      p1_update_func(p1_pos[0], p1_pos[1], key_press_storer, &p1_pos[0],
+                     &p1_pos[1]);
+      p2_update_func(p2_pos[0], p2_pos[1], key_press_storer, &p2_pos[0],
+                     &p2_pos[1]);
+    }
+#endif
+
   try {
     try {
-      (*p1_mover)(p1_pos[0], p1_pos[1], p1_pos[2])
-          .get(p1_pos, p1_pos + 1, p1_pos + 2);
+      p1_update_func(p1_pos[0], p1_pos[1], key_press_storer, &p1_pos[0],
+                     &p1_pos[1]);
+      // (*p1_mover)(p1_pos[0], p1_pos[1], key_press_storer)
+      //     .get(&p1_pos[0], &p1_pos[1]);
+      // (*p2_mover)(p2_pos[0], p2_pos[1], key_press_storer)
+      //     .get(&p2_pos[0], &p2_pos[1]);
     } catch (fase::ErrorThrownByNode &e) {
       std::cerr << e.what() << std::endl;
       e.rethrow_nested();
@@ -82,31 +131,16 @@ bool ShootingGame::Impl::mainLoop() {
     std::cerr << "    " << e.what() << std::endl;
   }
 
-  std::vector<GLfloat> g_vertex_buffer_data = {
-      -.1f, -.1f, .0f, .1f, -.1f, .0f, .0f, .1f, .0f,
-  };
+  // std::clog << "p1" << std::endl;
+  drawPlayer(p1_pos[0], p1_pos[1], polygons[0]);
+  // std::clog << "p2" << std::endl;
+  // drawPlayer(p2_pos[0] + 0.5, p2_pos[1], polygons[1]);
 
-  for (size_t i = 0; i < 3; i++) {
-    g_vertex_buffer_data[i * 3 + 0] += p1_pos[0];
-    g_vertex_buffer_data[i * 3 + 1] += p1_pos[1];
-    g_vertex_buffer_data[i * 3 + 2] += p1_pos[2];
-  }
-
-  polygons.back().setData(g_vertex_buffer_data);
-
-  for (auto &pol : polygons) {
-    pol.draw();
-  }
+  polygons[0].draw();
+  // polygons[1].draw();
+  // for (auto &pol : polygons) {
+  //   pol.draw();
+  // }
 
   return true;
 }
-
-// ==========================PImpl Pattern======================================
-ShootingGame::ShootingGame(GLFWwindow *window)
-    : impl(std::make_unique<Impl>(window)) {}
-ShootingGame::~ShootingGame() {}
-
-void ShootingGame::init(const std::vector<fase::Callable *> &pipes) {
-  impl->init(pipes);
-}
-bool ShootingGame::mainLoop() { return impl->mainLoop(); }
